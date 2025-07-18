@@ -1,3 +1,9 @@
+# Import Django's admin module to customize the admin interface
 from django.contrib import admin
 
-# Register your models here.
+# Import the Student model from the current app's models.py
+from .models import Student
+
+# Register the Student model with the Django admin site
+# This allows you to view, add, edit, and delete Student records in the admin panel
+admin.site.register(Student)
