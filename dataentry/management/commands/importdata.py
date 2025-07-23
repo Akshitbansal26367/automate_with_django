@@ -1,6 +1,7 @@
 # Import BaseCommand to create a custom management command
 # Import CommandError to raise errors in case something goes wrong
 from django.core.management.base import BaseCommand, CommandError
+from django.db import DataError
 
 # Import apps module to dynamically fetch models from all installed apps
 from django.apps import apps
@@ -44,10 +45,18 @@ class Command(BaseCommand):
         if not model:
             raise CommandError(f'Model "{model_name}" not found in any app!')
         
+        # get all the field names of the model that we found
+        model_fields = [field.name for field in model._meta.fields if field.name != "id"]
+        
         # Open the CSV file for reading        
         with open(file_path, 'r') as file:
             # Create a DictReader to parse CSV rows into dictionaries
             reader = csv.DictReader(file)
+            csv_header = reader.fieldnames
+            
+            # compare csv header with model's field names
+            if csv_header != model_fields:
+                raise DataError(f"CSV file doesn't match with the {model_name} table fields.")
             
             # Loop through each row in the CSV file
             for row in reader:

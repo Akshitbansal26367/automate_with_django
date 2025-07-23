@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class DataentryConfig(AppConfig):
+class UploadsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "dataentry"
+    name = "uploads"
