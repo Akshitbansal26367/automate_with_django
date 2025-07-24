@@ -1,13 +1,16 @@
 # Import BaseCommand to create a custom management command
 # Import CommandError to raise errors in case something goes wrong
+import csv
 from django.core.management.base import BaseCommand, CommandError
-from django.db import DataError
+
 
 # Import apps module to dynamically fetch models from all installed apps
 from django.apps import apps
 
+from dataentry.utils import check_csv_errors
+
 # Import Python's built-in csv module for reading CSV files
-import csv
+
 
 # Define the custom management command class
 # Proposed usage: python manage.py importdata file_path model_name
@@ -28,36 +31,10 @@ class Command(BaseCommand):
         file_path = kwargs['file_path']  # Path to the CSV file
         model_name = kwargs['model_name'].capitalize()  # Capitalize model name for consistency
         
-        # Initialize model to None
-        model = None
+        model = check_csv_errors(file_path, model_name)
         
-        # Search for the model across all installed apps
-        for app_config in apps.get_app_configs():
-            try:
-                # Try to get the model from the current app
-                model = apps.get_model(app_config.label, model_name)
-                break # Model found, exit the loop
-            except LookupError:
-                # Model not found in this app, continue to the next one
-                continue
-        
-        # If model is still None, raise an error as it was not found
-        if not model:
-            raise CommandError(f'Model "{model_name}" not found in any app!')
-        
-        # get all the field names of the model that we found
-        model_fields = [field.name for field in model._meta.fields if field.name != "id"]
-        
-        # Open the CSV file for reading        
         with open(file_path, 'r') as file:
-            # Create a DictReader to parse CSV rows into dictionaries
             reader = csv.DictReader(file)
-            csv_header = reader.fieldnames
-            
-            # compare csv header with model's field names
-            if csv_header != model_fields:
-                raise DataError(f"CSV file doesn't match with the {model_name} table fields.")
-            
             # Loop through each row in the CSV file
             for row in reader:
                 # Create a new instance of the model using row data

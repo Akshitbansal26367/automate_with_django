@@ -1,4 +1,9 @@
 from django.apps import apps  # Import Django's apps registry to access all models
+from django.core.management.base import CommandError
+import csv
+from django.db import DataError
+from django.core.mail import EmailMessage
+from django.conf import settings
 
 # Function to retrieve all custom models in the project
 def get_all_custom_models():
@@ -17,3 +22,47 @@ def get_all_custom_models():
     
     # Return the list of custom model names
     return custom_models
+
+def check_csv_errors(file_path, model_name):
+    # Initialize model to None
+        model = None
+        
+        # Search for the model across all installed apps
+        for app_config in apps.get_app_configs():
+            try:
+                # Try to get the model from the current app
+                model = apps.get_model(app_config.label, model_name)
+                break # Model found, exit the loop
+            except LookupError:
+                # Model not found in this app, continue to the next one
+                continue
+        
+        # If model is still None, raise an error as it was not found
+        if not model:
+            raise CommandError(f'Model "{model_name}" not found in any app!')
+        
+        # get all the field names of the model that we found
+        model_fields = [field.name for field in model._meta.fields if field.name != "id"]
+        
+        try:
+            # Open the CSV file for reading        
+            with open(file_path, 'r') as file:
+                # Create a DictReader to parse CSV rows into dictionaries
+                reader = csv.DictReader(file)
+                csv_header = reader.fieldnames
+                
+                # compare csv header with model's field names
+                if csv_header != model_fields:
+                    raise DataError(f"CSV file doesn't match with the {model_name} table fields.")
+        except Exception as e:
+            raise e
+        
+        return model
+
+def send_email_notification(mail_subject, message, to_email):
+    try:
+        from_email = settings.DEFAULT_FROM_EMAIL
+        mail = EmailMessage(mail_subject, message, from_email, to=[to_email])
+        mail.send()
+    except Exception as e:
+        raise e

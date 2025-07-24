@@ -1,9 +1,9 @@
 from django.conf import settings  # To access project settings like BASE_DIR
 from django.shortcuts import redirect, render  # To render templates and redirect requests
-from .utils import get_all_custom_models  # Utility function to get all custom models
+from .utils import check_csv_errors, get_all_custom_models  # Utility function to get all custom models
 from uploads.models import Upload  # Import Upload model to store uploaded file info
-from django.core.management import call_command  # To call a custom Django management command
 from django.contrib import messages
+from .tasks import import_data_task
 
 # View to handle importing data into database tables
 def import_data(request):
@@ -27,14 +27,18 @@ def import_data(request):
         # Combine base path and relative path to get full file path
         file_path = base_url + relative_path
         
-        # Call the custom management command 'importdata'
+        # check for the csv errors
         try:
-            # Pass the file_path and model_name as arguments to the command
-            call_command("importdata", file_path, model_name)
-            messages.success(request, 'Data imported successfully')
+            check_csv_errors(file_path, model_name)
         except Exception as e:
-            # Raise any exceptions that occur during import
             messages.error(request, str(e))
+            return redirect("import_data")
+        
+        # handle the import data task
+        import_data_task.delay(file_path, model_name)
+        
+        # show the message to the user
+        messages.success(request, "Your data is being imported, you will be notified once it is done.")
         
         # Redirect to the same page after processing to avoid form resubmission
         return redirect('import_data')
