@@ -7,4 +7,5 @@ urlpatterns = [
     # When the user visits "import-data/", the import_data view will be called
     # The name 'import_data' allows reverse URL lookups in templates and views
     path("import-data/", views.import_data, name='import_data'),
+    path("export-data/", views.export_data, name='export_data'),
 ]

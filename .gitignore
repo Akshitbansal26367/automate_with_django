@@ -77,5 +77,4 @@ dmypy.json
 .pytype/
 cython_debug/
 Datasets/
-exported_Customer_data_2025-07-20-11-26-26.csv
-exported_Student_data_2025-07-20-11-16-44.csv
+*.csv

@@ -9,6 +9,7 @@ from django.apps import apps
 
 # Import datetime module to generate timestamps for the exported file name
 import datetime
+from dataentry.utils import generate_csv_file
 
 # Define the custom management command class
 # Proposed usage: python manage.py exportdata <model_name>
@@ -46,11 +47,8 @@ class Command(BaseCommand):
         # Fetch all records from the model's database table
         data = model.objects.all()
         
-        # Generate a timestamp (format: YYYY-MM-DD-HH-MM-SS) for unique file naming
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        
-        # Define the CSV file name/path, including model name and timestamp
-        file_path = f"exported_{model_name}_data_{timestamp}.csv"
+        # generate csv file path
+        file_path = generate_csv_file(model_name)
         
         # Open the CSV file in write mode ('w') and prevent blank lines using newline=''
         with open(file_path, 'w', newline='') as file:
