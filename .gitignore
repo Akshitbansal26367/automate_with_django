@@ -79,3 +79,4 @@ cython_debug/
 Datasets/
 *.csv
 static/
+awd_main/settings.py
